@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: po-app
 spec:
-  type: LoadBalancer
+  type: ClsuerIP
   selector:
     app: po-app
   ports:
