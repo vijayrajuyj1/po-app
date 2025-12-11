@@ -37,8 +37,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: "deploy-ec2.sh"
-          target: "/home/${{ secrets.EC2_USER }}/deploy-ec2.sh"
+          source: "deploy_ec2.sh"
+          target: "/home/${{ secrets.EC2_USER }}/deploy_ec2.sh"
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
@@ -47,10 +47,10 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            chmod +x /home/${{ secrets.EC2_USER }}/deploy.sh
+            chmod +x /home/${{ secrets.EC2_USER }}/deploy_ec2.sh
             export DB_HOST='${{ secrets.DB_HOST }}'
             export DB_PORT='${{ secrets.DB_PORT }}'
             export DB_USER='${{ secrets.DB_USER }}'
             export DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
             export DB_NAME='${{ secrets.DB_NAME }}'
-            bash /home/${{ secrets.EC2_USER }}/deploy-ec2.sh ${{ steps.build.outputs.image }}
+            bash /home/${{ secrets.EC2_USER }}/deploy_ec2.sh ${{ steps.build.outputs.image }}
