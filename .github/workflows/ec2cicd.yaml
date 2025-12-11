@@ -23,14 +23,15 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, Tag, Push to ECR
+      - name: Build, Tag & Push to ECR
         id: build
         run: |
-          IMAGE_URI=${{ secrets.ECR_REPO }}:latest
+          IMAGE_TAG=${GITHUB_RUN_NUMBER}  # unique tag for this run
+          IMAGE_URI=${{ secrets.ECR_REPO }}:$IMAGE_TAG
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
           echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
-
+          
       - name: Copy deploy script to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
