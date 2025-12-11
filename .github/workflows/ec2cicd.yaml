@@ -1,0 +1,56 @@
+name: CI/CD to EC2 using ECR
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, Tag, Push to ECR
+        id: build
+        run: |
+          IMAGE_URI=${{ secrets.ECR_REPO }}:latest
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+
+      - name: Copy deploy script to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "deploy-ec2.sh"
+          target: "/home/${{ secrets.EC2_USER }}/deploy-ec2.sh"
+
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            chmod +x /home/${{ secrets.EC2_USER }}/deploy.sh
+            export DB_HOST='${{ secrets.DB_HOST }}'
+            export DB_PORT='${{ secrets.DB_PORT }}'
+            export DB_USER='${{ secrets.DB_USER }}'
+            export DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
+            export DB_NAME='${{ secrets.DB_NAME }}'
+            bash /home/${{ secrets.EC2_USER }}/deploy-ec2.sh ${{ steps.build.outputs.image }}
