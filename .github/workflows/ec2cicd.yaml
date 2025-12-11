@@ -9,9 +9,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout repo
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # 2️⃣ Configure AWS Credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -19,10 +21,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      # 3️⃣ Login to Amazon ECR
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # 4️⃣ Build Docker image with unique tag and push to ECR
       - name: Build, Tag & Push to ECR
         id: build
         run: |
@@ -31,7 +34,8 @@ jobs:
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
           echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
-          
+
+      # 5️⃣ Copy deploy script to EC2
       - name: Copy deploy script to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -41,6 +45,7 @@ jobs:
           source: "deploy_ec2.sh"
           target: "/home/${{ secrets.EC2_USER }}/deploy_ec2.sh"
 
+      # 6️⃣ Deploy on EC2
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -48,10 +53,20 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
+            # Remove any old file or directory with the same name
+            rm -rf /home/${{ secrets.EC2_USER }}/deploy_ec2.sh
+
+            # Copy the file again just to be safe (optional if SCP already copies)
+            # chmod +x will fail if file doesn't exist
+            # Set executable permission
             chmod +x /home/${{ secrets.EC2_USER }}/deploy_ec2.sh
+
+            # Export DB secrets
             export DB_HOST='${{ secrets.DB_HOST }}'
             export DB_PORT='${{ secrets.DB_PORT }}'
             export DB_USER='${{ secrets.DB_USER }}'
             export DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
             export DB_NAME='${{ secrets.DB_NAME }}'
+
+            # Run deploy script with Docker image URI
             bash /home/${{ secrets.EC2_USER }}/deploy_ec2.sh ${{ steps.build.outputs.image }}
