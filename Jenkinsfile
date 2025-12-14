@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        sonarScanner 'sonar-scanner'
+        sonarRunner 'sonar-scanner'
     }
 
     environment {
@@ -41,8 +41,6 @@ pipeline {
 
         stage('Login to ECR') {
             steps {
-                echo 'Logging into Amazon ECR...'
-
                 withCredentials([
                     [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred']
                 ]) {
@@ -56,7 +54,6 @@ pipeline {
 
         stage('Build and Push Docker Image') {
             steps {
-                echo 'Building and pushing Docker image...'
                 sh '''
                     docker build -t ${DOCKER_IMAGE_1} .
                     docker push ${DOCKER_IMAGE_1}
