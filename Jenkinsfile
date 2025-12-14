@@ -1,16 +1,10 @@
 pipeline {
     agent any
 
-    tools {
-        sonarRunner 'sonar-scanner'
-    }
-
     environment {
         AWS_REGION     = 'us-east-1'
         ECR_REPO_1     = '181975986508.dkr.ecr.us-east-1.amazonaws.com/po_conditioning_v1'
         DOCKER_IMAGE_1 = "${ECR_REPO_1}:${BUILD_NUMBER}"
-
-        SONAR_URL      = 'http://3.235.193.244:9000'
 
         GIT_REPO_NAME  = 'po-app'
         GIT_USER_NAME  = 'vijayarajuyj1'
@@ -22,18 +16,14 @@ pipeline {
             steps {
                 echo 'Performing static code analysis for Python with SonarQube...'
 
-                withCredentials([
-                    string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')
-                ]) {
+                withSonarQubeEnv('sonarqube') {
                     sh '''
                         sonar-scanner \
                           -Dsonar.projectKey=python-backend \
                           -Dsonar.projectName=python-backend \
                           -Dsonar.sources=. \
                           -Dsonar.python.version=3.10 \
-                          -Dsonar.sourceEncoding=UTF-8 \
-                          -Dsonar.host.url=${SONAR_URL} \
-                          -Dsonar.login=${SONAR_AUTH_TOKEN}
+                          -Dsonar.sourceEncoding=UTF-8
                     '''
                 }
             }
