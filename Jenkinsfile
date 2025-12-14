@@ -7,7 +7,7 @@ pipeline {
         DOCKER_IMAGE_1 = "${ECR_REPO_1}:${BUILD_NUMBER}"
 
         GIT_REPO_NAME  = 'po-app'
-        GIT_USER_NAME  = 'vijayarajuyj1'
+        GIT_USER_NAME  = 'vijayrajuyj1'
     }
 
     stages {
@@ -15,7 +15,6 @@ pipeline {
         stage('Login to ECR') {
             steps {
                 echo 'Logging into Amazon ECR...'
-
                 withCredentials([
                     [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred']
                 ]) {
@@ -55,5 +54,6 @@ pipeline {
                 }
             }
         }
+
     }
 }
