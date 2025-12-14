@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        sonarScanner 'sonar-scanner'
+    }
+
     environment {
         AWS_REGION     = 'us-east-1'
         ECR_REPO_1     = '181975986508.dkr.ecr.us-east-1.amazonaws.com/po_conditioning_v1'
@@ -9,7 +13,7 @@ pipeline {
         SONAR_URL      = 'http://3.235.193.244:9000'
 
         GIT_REPO_NAME  = 'po-app'
-        GIT_USER_NAME  = 'vijayrajuyj1'
+        GIT_USER_NAME  = 'vijayarajuyj1'
     }
 
     stages {
@@ -26,7 +30,6 @@ pipeline {
                           -Dsonar.projectKey=python-backend \
                           -Dsonar.projectName=python-backend \
                           -Dsonar.sources=. \
-                          -Dsonar.language=py \
                           -Dsonar.python.version=3.10 \
                           -Dsonar.sourceEncoding=UTF-8 \
                           -Dsonar.host.url=${SONAR_URL} \
